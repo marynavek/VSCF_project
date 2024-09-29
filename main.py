@@ -37,14 +37,13 @@ if __name__ == "__main__":
     # classifier_path = args.classifier_path
     # model_type = args.model_type
     # use_cpu = args.use_cpu
-    dataset_path = "/home/cslfiu/Downloads/data/frames"
-    image_path =  '/home/cslfiu/VSCF_project/images'
-    model_path =  "/home/cslfiu/VSCF_project/models"
-    tensorboard_path = "/home/cslfiu/VSCF_project/logs"
+    dataset_path = "/Users/marynavek/Downloads/frames/Test_data"
+    image_path =  '/Users/marynavek/Projects/VSCF_project/images'
+    model_path =  "/Users/marynavek/Projects/VSCF_project/models"
+    tensorboard_path = "/Users/marynavek/Projects/VSCF_project/logs"
     classifier_path = ""
     model_type = "wgan"
     use_cpu = True
-    
     
 
     # set CPU
@@ -55,7 +54,7 @@ if __name__ == "__main__":
         tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
     # create dataset
-    dataset_maker = DataSetGeneratorGAN(dataset_path)
+    dataset_maker = DataSetGeneratorGAN(input_dir_patchs=dataset_path)
 
     train_set = dataset_maker.create_dataset()
     print(f"Train dataset contains {len(train_set)} samples")
