@@ -4,10 +4,11 @@ from keras.models import Model  # type: ignore
 
 
 class Critic:
-    def __init__(self, input_shape):
+    def __init__(self, input_shape, number_of_classes=None):
         self.model = None
         self.model_name = None
         self.input_width, self.input_height, self.input_channels = input_shape
+        self.number_of_classes = number_of_classes
 
     def __generate_model_name(self) -> str:
             """
@@ -52,7 +53,7 @@ class Critic:
         x = layers.Flatten()(x)
 
         # Output layer
-        x = layers.Dense(1)(x)
+        x = layers.Dense(self.number_of_classes, activation='softmax')(x)
         # x = layers.Activation("sigmoid")(x)
 
         output_layer = x

@@ -2,7 +2,7 @@ import tensorflow as tf
 from diffusion_model_updated import make_diffusion_model, make_classifier, save_generated_images, train_step
 import numpy as np
 
-diffusion_model_path = "/Users/marynavek/Projects/VSCF_project/models_diff/diffusion_model_epoch_1.keras"
+diffusion_model_path = "/Users/marynavek/Projects/VSCF_project/models_diff/diffusion_model_epoch_1_batch_400.keras"
 
 
 if __name__ == "__main__":

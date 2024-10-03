@@ -6,9 +6,10 @@ from keras.callbacks import TensorBoard
 from pathlib import Path
 import argparse, os
 
+from critic import Critic
 from dcgan import DCGAN
 from discriminator import Discriminator
-from generator import Generator
+from generator import Generator2
 from utils.datagenGAN import DataSetGeneratorGAN
 from utils.datagenGAN import DataGeneratorGAN
 from utils.callbacks import GANMonitor, ModelSaveCallback
@@ -26,7 +27,7 @@ parser.add_argument("--model_type", type=str, required=True, choices=['wgan', 'd
 if __name__ == "__main__":
 
     EPOCHS = 20
-    BATCH_SIZE = 12
+    BATCH_SIZE = 16
 
     # parse arguments
     # args = parser.parse_args()
@@ -70,14 +71,17 @@ if __name__ == "__main__":
     # shape = (1920 // 2, 1080 // 2,3)
 
     # define models
-    gen = Generator(shape, num_classes)
+    gen = Generator2(shape, num_classes)
     gen.create_model()
 
     disc = Discriminator(shape)
     disc.create_model()
 
+    critic = Critic(shape,num_classes)
+    critic.create_model()
+
     # load pre-trained classifier
-    print('Classifier Exists: ', os.path.exists(classifier_path))
+    # print('Classifier Exists: ', os.path.exists(classifier_path))
     # classifier = keras.models.load_model(classifier_path)
 
     # create callbacks
@@ -88,11 +92,13 @@ if __name__ == "__main__":
     # create optimizers
     generator_optimizer = optimizers.Adam(learning_rate=0.0001, beta_1=0.5, beta_2=0.9)
     discriminator_optimizer = optimizers.Adam(learning_rate=0.0001, beta_1=0.5, beta_2=0.9)
+    critic_optimizer = optimizers.Adam(learning_rate=0.0001, beta_1=0.5, beta_2=0.9)
+
 
     if model_type == 'wgan':
         total_steps = len(train_set) // BATCH_SIZE * EPOCHS
         # model = WGANGP(discriminator=disc.model, generator=gen.model, classifier=classifier, input_shape=shape, total_steps=total_steps)
-        model = WGANGP(discriminator=disc.model, generator=gen.model, input_shape=shape, total_steps=total_steps)
+        model = WGANGP(discriminator=disc.model, generator=gen.model, classifier=critic.model, input_shape=shape, total_steps=total_steps)
         print(f"Total steps: {total_steps}")
 
     # elif model_type == 'dcgan':
@@ -105,10 +111,10 @@ if __name__ == "__main__":
     model.compile(
         d_optimizer=discriminator_optimizer,
         g_optimizer=generator_optimizer,
+        c_optimizer=critic_optimizer
     )
 
     
-
     model.fit(
         DataGeneratorGAN(train_set, num_classes, BATCH_SIZE),
         epochs=EPOCHS,

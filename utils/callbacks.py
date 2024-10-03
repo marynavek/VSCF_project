@@ -16,7 +16,11 @@ class GANMonitor(Callback):
     def __init__(self, data_path: str, save_path: str, num_img:int =None, folder: str = "Validation"):
         # device_paths = sorted(list(glob(f"{data_path}*")))
         data_path=Path(data_path)
-        device_paths = sorted(list(data_path.glob("*")))
+        device_paths_temp = sorted(list(data_path.glob("*")))
+        device_paths = []
+        for p in device_paths_temp:
+            if ".DS" not in str(p):
+                device_paths.append(p)
         print(f"data path: {data_path}")
         print(f"Device paths: {device_paths}")
         if len(device_paths) == 0:
@@ -38,6 +42,7 @@ class GANMonitor(Callback):
                 print(device_path)
                 # image_paths = list(glob(f"{device_path}/{folder}/**/*.jpg"))
                 image_paths= list(device_path.glob(f"**/{folder}/**/*.jpg"))
+                print(image_paths)
 
             # else:
             #     image_paths = list(glob(f"{device_path}/{folder}/**/*.jpg"))

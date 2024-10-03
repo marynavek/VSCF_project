@@ -8,7 +8,7 @@ class WGANGP(Model):
         self,
         discriminator,
         generator,
-        # classifier,
+        classifier,
         input_shape,
         total_steps,
         discriminator_extra_steps=3,
@@ -24,7 +24,8 @@ class WGANGP(Model):
         self.discriminator.summary()
         self.generator = generator
         self.generator.summary()
-        # self.classifier = classifier
+        self.classifier = classifier
+        self.classifier.summary()
 
         self.d_steps = discriminator_extra_steps
 
@@ -38,15 +39,16 @@ class WGANGP(Model):
         self.current_step = tf.Variable(tf.constant(0, dtype=tf.int64), trainable=False)
         self.total_steps = total_steps
 
-    def compile(self, d_optimizer, g_optimizer):
+    def compile(self, d_optimizer, g_optimizer, c_optimizer):
         super().compile()
         self.d_optimizer = d_optimizer
         self.g_optimizer = g_optimizer
+        self.c_optimizer = c_optimizer
         self.d_wass_loss = metrics.Mean(name="d_wasserstein_loss")
         self.d_gp = metrics.Mean(name="d_gradient_penalty")
         self.g_loss = metrics.Mean(name="g_loss")
         self.d_loss = metrics.Mean(name="d_loss")
-        # self.cls_loss = metrics.Mean(name="cls_loss")
+        self.cls_loss = metrics.Mean(name="cls_loss")
         self.adv_loss = metrics.Mean(name="adv_loss")
         self.p_loss = metrics.Mean(name="perceptual_loss")
 
@@ -57,7 +59,7 @@ class WGANGP(Model):
             self.d_wass_loss,
             self.d_gp,
             self.g_loss,
-            # self.cls_loss,
+            self.cls_loss,
             self.adv_loss,
             self.p_loss,
         ]
@@ -79,12 +81,13 @@ class WGANGP(Model):
         gp = tf.reduce_mean((norm - 1.0) ** 2)
         return gp
 
-    # def classifier_loss(self, generated_images, labels):
-    #     shifted_labels = tf.roll(labels, shift=1, axis=1)
-    #     cls_predictions = self.classifier(generated_images, training=False)
-    #     cls_loss = categorical_crossentropy(shifted_labels, cls_predictions)
+    def classifier_loss(self, generated_images, labels):
 
-        # return cls_loss
+        # shifted_labels = tf.roll(labels, shift=1, axis=1)
+        cls_predictions = self.classifier(generated_images, training=False)
+        cls_loss = categorical_crossentropy(labels, cls_predictions)
+
+        return cls_loss
 
     def perceptual_loss(self, img1, img2):
         return tf.reduce_mean(tf.abs(img1 - img2))
@@ -112,11 +115,23 @@ class WGANGP(Model):
                     real_Predictions
                 )
                 d_gp = self.gradient_penalty(batch_size, real_images, fake_images)
+
                 d_loss = d_wass_loss + d_gp * self.gp_weight
 
             d_gradients = tape.gradient(d_loss, self.discriminator.trainable_variables)
             self.d_optimizer.apply_gradients(
                 zip(d_gradients, self.discriminator.trainable_variables)
+            )
+
+            with tf.GradientTape() as tape:
+                fake_images = self.generator(real_images, training=True)
+                cls_loss_real = self.classifier_loss(real_images, real_labels)
+                cls_loss_fake = self.classifier_loss(fake_images, real_labels)
+                cls_loss = tf.reduce_mean(cls_loss_real + cls_loss_fake)
+
+            c_gradients = tape.gradient(cls_loss, self.classifier.trainable_variables)
+            self.c_optimizer.apply_gradients(
+                zip(c_gradients, self.classifier.trainable_variables)
             )
 
         # train generator
@@ -129,16 +144,16 @@ class WGANGP(Model):
 
             # calculate classification loss
             # if self.current_step >= self.total_steps // 2:
-            # cls_loss = self.classifier_loss(generated_images, real_labels)
+            cls_loss = self.classifier_loss(generated_images, real_labels)
             # else:
-            #     cls_loss = 0.0
+                # cls_loss = 0.0
 
             # calculate perceptual loss
             perceptual_loss = self.perceptual_loss(real_images, generated_images)
 
             # add other losses to the generator loss
             g_loss = (
-                # (cls_loss * self.cls_weight)
+                (cls_loss * self.cls_weight) +
                 (adv_loss * self.adv_weight)
                 + (perceptual_loss * self.perceptual_weight)
             )
@@ -152,7 +167,7 @@ class WGANGP(Model):
         self.d_wass_loss.update_state(d_wass_loss)
         self.d_gp.update_state(d_gp)
         self.g_loss.update_state(g_loss)
-        # self.cls_loss.update_state(cls_loss)
+        self.cls_loss.update_state(cls_loss)
         self.adv_loss.update_state(adv_loss)
         self.p_loss.update_state(perceptual_loss)
 

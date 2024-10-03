@@ -67,41 +67,41 @@ if __name__ == "__main__":
     diffusion_model = make_diffusion_model()
     print(diffusion_model.summary())
     # diffusion_model = DiffusionModel(diffusion_modules)
-    classifier_model = make_classifier()
-    print(classifier_model.summary())
+    # classifier_model = make_classifier()
+    # print(classifier_model.summary())
 
-    # Create data generator
-    # batch_size = 16
+    # # Create data generator
+    # # batch_size = 16
 
-    data_generator = DataGeneratorGAN(train_set, num_classes, BATCH_SIZE)
+    # data_generator = DataGeneratorGAN(train_set, num_classes, BATCH_SIZE)
 
-    # Training loop
-    epochs = 20
-    # print(len(data_generator))
-    step_per_epoch = len(data_generator)
-    for epoch in range(epochs):
-        print(f'\nEpoch {epoch+1}/{epochs}')
-        progress_bar = tqdm(total=len(data_generator), desc="Training", unit="batch")
-        i = 0
-        for count, (input_images, camera_labels) in enumerate(data_generator):
-            gen_loss, disc_loss = train_step(diffusion_model, classifier_model, input_images, camera_labels, NUM_DIFFUSION_STEPS)
+    # # Training loop
+    # epochs = 20
+    # # print(len(data_generator))
+    # step_per_epoch = len(data_generator)
+    # for epoch in range(epochs):
+    #     print(f'\nEpoch {epoch+1}/{epochs}')
+    #     progress_bar = tqdm(total=len(data_generator), desc="Training", unit="batch")
+    #     i = 0
+    #     for count, (input_images, camera_labels) in enumerate(data_generator):
+    #         gen_loss, disc_loss = train_step(diffusion_model, classifier_model, input_images, camera_labels, NUM_DIFFUSION_STEPS)
 
-            # progress_bar.set_postfix(loss=loss.numpy())
-            progress_bar.update(1)
-            print(f'Batch {i+1}/{step_per_epoch}, Generator Loss: {gen_loss}, Discriminator Loss: {disc_loss}')
-            i += 1
-            if count >= step_per_epoch:
-                break
+    #         # progress_bar.set_postfix(loss=loss.numpy())
+    #         progress_bar.update(1)
+    #         print(f'Batch {i+1}/{step_per_epoch}, Generator Loss: {gen_loss}, Discriminator Loss: {disc_loss}')
+    #         i += 1
+    #         if count >= step_per_epoch:
+    #             break
 
-            if count % 100 == 0:
-                diffusion_model.save(os.path.join(diff_model_path, f'diffusion_model_epoch_{epoch+1}_batch_{count}.keras'))
-        progress_bar.close()
-        print(f'Epoch {epoch+1}/{epochs}, Generator Loss: {gen_loss}, Discriminator Loss: {disc_loss}')
+    #         if count % 100 == 0:
+    #             diffusion_model.save(os.path.join(diff_model_path, f'diffusion_model_epoch_{epoch+1}_batch_{count}.keras'))
+    #     progress_bar.close()
+    #     print(f'Epoch {epoch+1}/{epochs}, Generator Loss: {gen_loss}, Discriminator Loss: {disc_loss}')
 
-        # # Save model after each epoch
-        diffusion_model.save(os.path.join(diff_model_path, f'diffusion_model_epoch_{epoch+1}.keras'))
+    #     # # Save model after each epoch
+    #     diffusion_model.save(os.path.join(diff_model_path, f'diffusion_model_epoch_{epoch+1}.keras'))
 
-        # Save a random image per class after each epoch
-        save_generated_images(dataset_path, diffusion_model, epoch+1)
+    #     # Save a random image per class after each epoch
+    #     save_generated_images(dataset_path, diffusion_model, epoch+1)
 
     
